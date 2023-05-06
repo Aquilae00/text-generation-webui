@@ -92,6 +92,7 @@ def load_model(model_name):
 
     # FlexGen
     elif shared.args.flexgen:
+        logging.info('Loaded flexgen')
         # Initialize environment
         env = ExecutionEnv.create(shared.args.disk_cache_dir)
 
@@ -115,6 +116,7 @@ def load_model(model_name):
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
+        logging.info('Loaded deepspeed')
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
@@ -122,6 +124,7 @@ def load_model(model_name):
 
     # RMKV model (not on HuggingFace)
     elif shared.model_type == 'rwkv':
+        logging.info('Loaded rwkv')
         from modules.RWKV import RWKVModel, RWKVTokenizer
 
         model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
@@ -131,6 +134,7 @@ def load_model(model_name):
 
     # llamacpp model
     elif shared.model_type == 'llamacpp':
+        logging.info('Loaded llama')
         from modules.llamacpp_model import LlamaCppModel
 
         path = Path(f'{shared.args.model_dir}/{model_name}')
@@ -145,7 +149,7 @@ def load_model(model_name):
 
     # Quantized model
     elif shared.args.wbits > 0:
-
+        logging.info('Loaded wbits')
         # Monkey patch
         if shared.args.monkey_patch:
             logging.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
@@ -250,8 +254,9 @@ def load_model(model_name):
             except:
                 pass
     else:
+        logging.info('DEFAULT TOKENIZER')
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
-
+    logging.info('Sanity check')
     logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
