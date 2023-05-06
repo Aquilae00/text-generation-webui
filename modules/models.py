@@ -82,6 +82,7 @@ def load_model(model_name):
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.model_type in ['rwkv', 'llamacpp']]):
+        logging.info('Loaded DEFAULT')
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
@@ -160,6 +161,7 @@ def load_model(model_name):
 
     # Custom
     else:
+        logging.info('Loaded CUSTOM')
         params = {"low_cpu_mem_usage": True}
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
             logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
@@ -215,7 +217,8 @@ def load_model(model_name):
                 max_memory=params['max_memory'],
                 no_split_module_classes=model._no_split_modules
             )
-
+        logging.info(checkpoint)
+        logging.info(params)
         model = LoaderClass.from_pretrained(checkpoint, **params)
 
     # Hijack attention with xformers
